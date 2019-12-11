@@ -5,6 +5,7 @@ const app = require('../lib/app');
 const connect = require('../lib/utils/connect');
 const mongoose = require('mongoose');
 const Attempt = require('../lib/models/Attempt');
+const Recipe = require('../lib/models/Recipe');
 
 describe('attempt routes', () => {
   beforeAll(() => {
@@ -15,6 +16,19 @@ describe('attempt routes', () => {
     return mongoose.connection.dropDatabase();
   });
 
+  let recipe;
+  beforeEach(async() => {
+    recipe = await Recipe.create({
+      name: 'Pasta',
+      directions: ['Just make pasta it\'s easy'],
+      ingredients: [{
+        name: 'pasta',
+        amount: 1,
+        measurement: 'serving'
+      }]
+    });
+  });
+
   afterAll(() => {
     return mongoose.connection.close();
   });
@@ -23,7 +37,7 @@ describe('attempt routes', () => {
     return request(app)
       .post('/api/v1/attempts')
       .send({
-        recipeId: 1,
+        recipeId: recipe._id,
         dateOfAttempt: 'December 5th, 2019',
         notes: 'Soooo good',
         rating: 5
@@ -31,7 +45,7 @@ describe('attempt routes', () => {
       .then(res => {
         expect(res.body).toEqual({
           _id: expect.any(String),
-          recipeId: 1,
+          recipeId: recipe._id.toString(),
           dateOfAttempt: 'December 5th, 2019',
           notes: 'Soooo good',
           rating: 5,
@@ -43,19 +57,19 @@ describe('attempt routes', () => {
   it('gets all attempts with GET', async() => {
     const attempts = await Attempt.create([
       {
-        recipeId: 1,
+        recipeId: recipe._id,
         dateOfAttempt: 'December 5th, 2019',
         notes: 'Soooo good',
         rating: 5
       },
       {
-        recipeId: 2,
+        recipeId: recipe._id,
         dateOfAttempt: 'December 6th, 2019',
         notes: 'Pretty good',
         rating: 3
       },
       {
-        recipeId: 3,
+        recipeId: recipe._id,
         dateOfAttempt: 'December 7th, 2019',
         notes: 'Soooo bad',
         rating: 1
@@ -68,7 +82,7 @@ describe('attempt routes', () => {
         attempts.forEach(attempt => {
           expect(res.body).toContainEqual({
             _id: attempt._id.toString(),
-            recipeId: attempt.recipeId,
+            recipeId: recipe._id.toString(),
             dateOfAttempt: attempt.dateOfAttempt,
             notes: attempt.notes,
             rating: attempt.rating,
@@ -80,7 +94,7 @@ describe('attempt routes', () => {
 
   it('gets an attempt by id with GET/:id', async() => {
     const attempt = await Attempt.create({
-      recipeId: 1,
+      recipeId: recipe._id,
       dateOfAttempt: 'December 5th, 2019',
       notes: 'Soooo good',
       rating: 5
@@ -91,7 +105,7 @@ describe('attempt routes', () => {
       .then(res => {
         expect(res.body).toEqual({
           _id: expect.any(String),
-          recipeId: 1,
+          recipeId: recipe._id.toString(),
           dateOfAttempt: 'December 5th, 2019',
           notes: 'Soooo good',
           rating: 5,
@@ -102,7 +116,7 @@ describe('attempt routes', () => {
 
   it('updates an item by id with PATCH/:id', async() => {
     const attempt = await Attempt.create({
-      recipeId: 1,
+      recipeId: recipe._id,
       dateOfAttempt: 'December 5th, 2019',
       notes: 'Soooo good',
       rating: 5
@@ -114,7 +128,7 @@ describe('attempt routes', () => {
       .then(res => {
         expect(res.body).toEqual({
           _id: attempt._id.toString(),
-          recipeId: 1,
+          recipeId: recipe._id.toString(),
           dateOfAttempt: 'December 5th, 2019',
           notes: 'Actually it was bad',
           rating: 1,
@@ -125,7 +139,7 @@ describe('attempt routes', () => {
 
   it('deletes an item by id with DELETE/:id', async() => {
     const attempt = await Attempt.create({
-      recipeId: 1,
+      recipeId: recipe._id,
       dateOfAttempt: 'December 5th, 2019',
       notes: 'Soooo good',
       rating: 5
@@ -136,7 +150,7 @@ describe('attempt routes', () => {
       .then(res => {
         expect(res.body).toEqual({
           _id: attempt._id.toString(),
-          recipeId: 1,
+          recipeId: recipe._id.toString(),
           dateOfAttempt: 'December 5th, 2019',
           notes: 'Soooo good',
           rating: 5,
