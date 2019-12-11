@@ -105,7 +105,7 @@ describe('attempt routes', () => {
       .then(res => {
         expect(res.body).toEqual({
           _id: expect.any(String),
-          recipeId: recipe._id.toString(),
+          recipeId: JSON.parse(JSON.stringify(recipe)),
           dateOfAttempt: 'December 5th, 2019',
           notes: 'Soooo good',
           rating: 5,
