@@ -5,6 +5,7 @@ const app = require('../lib/app');
 const connect = require('../lib/utils/connect');
 const mongoose = require('mongoose');
 const Recipe = require('../lib/models/Recipe');
+const Attempt = require('../lib/models/Attempt');
 
 describe('recipes routes', () => {
   beforeAll(() => {
@@ -143,6 +144,7 @@ describe('recipes routes', () => {
             'put dough on cookie sheet',
             'bake for 10 minutes'
           ],
+          attempts: [],
           __v: 0
         });
       });
@@ -223,14 +225,21 @@ describe('recipes routes', () => {
         'mix ingredients',
         'put dough on cookie sheet',
         'bake for 10 minutes'
-      ],
+      ]
+    });
+
+    await Attempt.create({
+      recipeId: recipe._id,
+      dateOfAttempt: 'today',
+      notes: 'yum',
+      rating: 5
     });
 
     return request(app)
       .delete(`/api/v1/recipes/${recipe._id}`)
       .then(deletedRecipe => {
         expect(deletedRecipe.body).toEqual({
-          _id: expect.any(String),
+          _id: recipe._id.toString(),
           name: 'cookies',
           ingredients: [
             {
@@ -252,8 +261,100 @@ describe('recipes routes', () => {
             'put dough on cookie sheet',
             'bake for 10 minutes'
           ],
+          attempts: {
+            n: 1,
+            deletedCount: 1,
+            ok: 1
+          },
           __v: 0
         });
+      });
+  });
+
+  it('can find recipes containing a specific ingredient', async() => {
+    await Recipe.create({
+      name: 'cookies',
+      ingredients: [
+        {
+          name: 'butter',
+          amount: 4,
+          measurement: 'pounds'
+        },
+        {
+          name: 'sugar',
+          amount: 10,
+          measurement: 'ounces'
+        }
+      ],
+      directions: [
+        'preheat oven to 375',
+        'mix ingredients',
+        'put dough on cookie sheet',
+        'bake for 10 minutes'
+      ]
+    });
+
+    const cookiesFlour = await Recipe.create({
+      name: 'cookies',
+      ingredients: [
+        {
+          name: 'butter',
+          amount: 4,
+          measurement: 'pounds'
+        },
+        {
+          name: 'sugar',
+          amount: 10,
+          measurement: 'ounces'
+        },
+        {
+          name: 'flour',
+          amount: 1,
+          measurement: 'cup'
+        }
+      ],
+      directions: [
+        'preheat oven to 375',
+        'mix ingredients',
+        'put dough on cookie sheet',
+        'bake for 10 minutes'
+      ]
+    });
+
+    return request(app)
+      .get('/api/v1/recipes/?ingredient=flour')
+      .then(res => {
+        expect(res.body).toEqual([{
+          _id: cookiesFlour._id.toString(),
+          name: 'cookies',
+          ingredients: [
+            {
+              _id: expect.any(String),
+              name: 'butter',
+              amount: 4,
+              measurement: 'pounds'
+            },
+            {
+              _id: expect.any(String),
+              name: 'sugar',
+              amount: 10,
+              measurement: 'ounces'
+            },
+            {
+              _id: expect.any(String),
+              name: 'flour',
+              amount: 1,
+              measurement: 'cup'
+            }
+          ],
+          directions: [
+            'preheat oven to 375',
+            'mix ingredients',
+            'put dough on cookie sheet',
+            'bake for 10 minutes'
+          ],
+          __v: 0
+        }]);
       });
   });
 });
